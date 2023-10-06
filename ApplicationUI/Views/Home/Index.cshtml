@@ -1,0 +1,126 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <select name="country" id="select_country" onchange="SelectCountry_OnChange(this)">
+        <option value="0">  - Select Country - </option>
+    </select>
+</div>
+<div class="text-center">
+    <select name="city" id="select_city" onchange="SelectCity_OnChange(this)">
+        <option value="0">  - Select City - </option>
+    </select>
+</div>
+<div class="text-left">
+    <table id="table">
+        <tbody>
+            <tr>
+                <td>Location &nbsp; :</td>
+                <td id="table_location"></td>
+            </tr>
+            <tr>
+                <td>Time &nbsp; :</td>
+                <td id="table_time"></td>
+            </tr>
+            <tr>
+                <td>Wind &nbsp; :</td>
+                <td id="table_wind"></td>
+            </tr>
+            <tr>
+                <td>Visibility &nbsp; :</td>
+                <td id="table_visibility"></td>
+            </tr>
+            <tr>
+                <td>Sky Conditions &nbsp; :</td>
+                <td id="table_sky_cond"></td>
+            </tr>
+            <tr>
+                <td>Temperature (Celcius) &nbsp; :</td>
+                <td id="table_celcius"></td>
+            </tr>
+            <tr>
+                <td>Temperature (Fahrenheit) &nbsp; :</td>
+                <td id="table_fahrenheit"></td>
+            </tr>
+            <tr>
+                <td>Dew Point &nbsp; :</td>
+                <td id="table_dew_point"></td>
+            </tr>
+            <tr>
+                <td>Relative Humidity &nbsp; :</td>
+                <td id="table_rel_humid"></td>
+            </tr>
+            <tr>
+                <td>Pressure &nbsp; :</td>
+                <td id="table_pressure"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+@section Scripts{
+    <script>
+        $.ajax({
+            type: 'GET',
+            url: '../GetAllCountries',
+            dataType: 'json',
+            success: function (response) {
+                $("#select_country").empty();
+                $("#select_country").append("<option value='0'> - Select Country - </option>");
+                $("#table").hide();
+
+                for (var i = 0; i < response.response.length; i++) {
+                    var id = response.response[i].code;
+                    var name = response.response[i].name;
+
+                    $("#select_country").append("<option value='" + id + "'>" + name + "</option>");
+                }
+            }
+        });
+
+        function SelectCountry_OnChange(selectObject)
+        {
+            var value = selectObject.value;
+            $.ajax({
+                type: 'GET',
+                url: '../GetCitiesFromCountry?countryCode=' + value,
+                dataType: 'json',
+                success: function (response) {
+                    $("#select_city").empty();
+                    $("#select_city").append("<option value='0'> - Select City - </option>");
+                    $("#table").hide();
+
+                    for (var i = 0; i < response.response.length; i++) {
+                        var id = response.response[i].city_code;
+                        var name = response.response[i].name;
+
+                        $("#select_city").append("<option value='" + id + "'>" + name + "</option>");
+                    }
+                }
+            });
+        }
+
+        function SelectCity_OnChange(selectObject)
+        {
+            $.ajax({
+                type: 'GET',
+                url: '../GetCityWeather?city=' + selectObject.options[selectObject.selectedIndex].text,
+                dataType: 'json',
+                success: function (response) {
+                    $("#table").show();
+                    $("#table_location").html("Longitude: " + response.coord.lon + ", Latitude: " + response.coord.lat);
+                    $("#table_time").html(new Date(response.dt));
+                    $("#table_wind").html("Speed: " + response.wind.speed + " m/s, Degree: " + response.wind.deg);
+                    $("#table_visibility").html(response.visibility/1000 + " km");
+                    $("#table_sky_cond").html(response.weather[0].main + "(" + response.weather[0].main + ")");
+                    $("#table_celcius").html(response.main.tempCelc + " &deg;C");
+                    $("#table_fahrenheit").html(response.main.temp + " &deg;F");
+                    $("#table_dew_point").html("-");
+                    $("#table_rel_humid").html(response.main.humidity + "%");
+                    $("#table_pressure").html(response.main.pressure + " hPa");
+                }
+            });
+        }
+    </script>
+}
